@@ -5,7 +5,6 @@ function App() {
   const [currentPage, setCurrentPage] = useState('home');
 
   useEffect(() => {
-    // Set initial page based on URL when component mounts
     const path = window.location.pathname;
     if (path === '/products') {
       setCurrentPage('products');
@@ -15,7 +14,6 @@ function App() {
       setCurrentPage('home');
     }
 
-    // Add event listener for back/forward browser navigation
     window.addEventListener('popstate', handlePopState);
     return () => window.removeEventListener('popstate', handlePopState);
   }, []);
@@ -40,7 +38,10 @@ function App() {
   return (
     <div className="app">
       <header className="app-header">
-        <h1>ZAIKU</h1>
+        <div className="logo-container">
+          <img src="logo.png" alt="ZAIKU Logo" className="logo" />
+          <h1>ZAIKU</h1>
+        </div>
         <nav>
           <ul>
             <li>
@@ -404,11 +405,11 @@ function ContactPage() {
             <h3>Contact Information</h3>
             <div className="info-item">
               <strong>Email:</strong>
-              <p>zaiku@gmail.com</p>
+              <p>zaiku.info@gmail.com</p>
             </div>
             <div className="info-item">
               <strong>Location:</strong>
-              <p>Tokyo, Japan</p>
+              <p>San Jose, California, US</p>
             </div>
             <div className="info-item">
               <strong>Hours:</strong>
