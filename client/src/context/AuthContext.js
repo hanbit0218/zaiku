@@ -1,5 +1,5 @@
-// src/context/AuthContext.js
 import React, { createContext, useState, useContext, useEffect } from 'react';
+import { login, register, validateToken, getUserProfile } from '../api';
 
 const AuthContext = createContext();
 
@@ -13,64 +13,64 @@ export function AuthProvider({ children }) {
   const [cartCount, setCartCount] = useState(0);
 
   useEffect(() => {
-    // Check localStorage for existing user
-    const savedUser = localStorage.getItem('user');
-    if (savedUser) {
-      setCurrentUser(JSON.parse(savedUser));
-    }
+    const verifyToken = async () => {
+      const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+      
+      if (token) {
+        try {
+          const { data } = await validateToken();
+          setCurrentUser(data);
+        } catch (error) {
+          // Token is invalid, log out user
+          logout();
+        }
+      }
+      
+      setIsLoading(false);
+    };
     
     // Load cart count
     const savedCart = localStorage.getItem('cart');
     if (savedCart) {
       const cartItems = JSON.parse(savedCart);
-      setCartCount(cartItems.length);
+      const totalItems = cartItems.reduce((total, item) => total + item.quantity, 0);
+      setCartCount(totalItems);
     }
     
-    setIsLoading(false);
+    verifyToken();
   }, []);
 
-  // Check if token is valid
-  useEffect(() => {
-    const validateToken = async () => {
-      const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+  const loginUser = async (email, password, rememberMe) => {
+    try {
+      const { data } = await login(email, password);
       
-      if (token && currentUser) {
-        try {
-          const response = await fetch('/api/auth/validate-token', {
-            headers: {
-              'Authorization': `Bearer ${token}`
-            }
-          });
-          
-          if (!response.ok) {
-            // Token is invalid, log out user
-            logout();
-          }
-        } catch (error) {
-          console.error('Token validation error:', error);
-        }
+      setCurrentUser(data);
+      
+      // Save token to appropriate storage
+      if (rememberMe) {
+        localStorage.setItem('token', data.token);
+      } else {
+        sessionStorage.setItem('token', data.token);
       }
-    };
-    
-    validateToken();
-    
-    // Set up interval to validate token periodically (e.g., every 15 minutes)
-    const intervalId = setInterval(validateToken, 15 * 60 * 1000);
-    
-    return () => clearInterval(intervalId);
-  }, [currentUser]);
+      
+      return { success: true };
+    } catch (error) {
+      return { 
+        success: false, 
+        message: error.response?.data?.message || 'Login failed' 
+      };
+    }
+  };
 
-  const login = (userData, token, rememberMe) => {
-    setCurrentUser(userData);
-    
-    // Save user data to localStorage
-    localStorage.setItem('user', JSON.stringify(userData));
-    
-    // Save token to appropriate storage
-    if (rememberMe) {
-      localStorage.setItem('token', token);
-    } else {
-      sessionStorage.setItem('token', token);
+  const registerUser = async (username, email, password) => {
+    try {
+      const { data } = await register(username, email, password);
+      return { success: true, data };
+    } catch (error) {
+      return { 
+        success: false, 
+        message: error.response?.data?.message || 'Registration failed' 
+      };
     }
   };
 
@@ -80,7 +80,6 @@ export function AuthProvider({ children }) {
     // Clear token and user data
     localStorage.removeItem('token');
     sessionStorage.removeItem('token');
-    localStorage.removeItem('user');
   };
 
   const updateCartCount = (count) => {
@@ -91,7 +90,8 @@ export function AuthProvider({ children }) {
     currentUser,
     isLoading,
     cartCount,
-    login,
+    loginUser,
+    registerUser,
     logout,
     updateCartCount
   };

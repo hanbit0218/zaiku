@@ -1,20 +1,74 @@
-// src/App.js
+// src/App.js with Search Bar added
 import React, { useState, useEffect } from 'react';
 import './styles/App.css';
 import './components/auth/Auth.css';
 import CartIcon from './components/cart/CartIcon';
 import ShoppingCart from './components/cart/ShoppingCart';
+import SearchBar from './components/search/SearchBar'; // Import the new SearchBar component
 
 function App() {
   const [currentPage, setCurrentPage] = useState('home');
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [cartCount, setCartCount] = useState(0);
+  const [searchParams, setSearchParams] = useState({ search: '' });
   
   // Password visibility states
   const [showLoginPassword, setShowLoginPassword] = useState(false);
   const [showRegisterPassword, setShowRegisterPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  
+  // Product data (moved to App.js from ProductsPage to be accessible to SearchBar)
+  const products = [
+    {
+      id: 1,
+      name: 'Dragon Silk Jacket',
+      price: 129.99,
+      image: 'https://via.placeholder.com/300x400?text=Dragon+Silk+Jacket',
+      category: 'Outerwear',
+      description: 'Luxurious silk jacket featuring an intricate dragon embroidery design.'
+    },
+    {
+      id: 2,
+      name: 'Koi Pattern Shirt',
+      price: 69.99,
+      image: 'https://via.placeholder.com/300x400?text=Koi+Pattern+Shirt',
+      category: 'Shirts',
+      description: 'Breathable cotton shirt with a subtle koi fish pattern throughout.'
+    },
+    {
+      id: 3,
+      name: 'Tiger Embroidered Cap',
+      price: 34.99,
+      image: 'https://via.placeholder.com/300x400?text=Tiger+Cap',
+      category: 'Accessories',
+      description: 'Stylish cap featuring a beautifully embroidered tiger design.'
+    },
+    {
+      id: 4,
+      name: 'Cherry Blossom Tee',
+      price: 49.99,
+      image: 'https://via.placeholder.com/300x400?text=Cherry+Blossom+Tee',
+      category: 'Shirts',
+      description: 'Soft cotton t-shirt with delicate cherry blossom print.'
+    },
+    {
+      id: 5,
+      name: 'Dragon Scale Hoodie',
+      price: 89.99,
+      image: 'https://via.placeholder.com/300x400?text=Dragon+Hoodie',
+      category: 'Outerwear',
+      description: 'Comfortable hoodie with a unique dragon scale pattern and embroidery.'
+    },
+    {
+      id: 6,
+      name: 'Lotus Silk Scarf',
+      price: 45.99,
+      image: 'https://via.placeholder.com/300x400?text=Lotus+Scarf',
+      category: 'Accessories',
+      description: 'Elegant silk scarf with lotus flower motifs in vibrant colors.'
+    }
+  ];
   
   useEffect(() => {
     const path = window.location.pathname;
@@ -57,8 +111,11 @@ function App() {
     }
   };
 
-  const navigate = (page) => {
+  const navigate = (page, params = {}) => {
     setCurrentPage(page);
+    if (params) {
+      setSearchParams(params);
+    }
     const url = page === 'home' ? '/' : `/${page}`;
     window.history.pushState({}, '', url);
   };
@@ -176,6 +233,10 @@ function App() {
                 )}
               </div>
             </li>
+            {/* Add Search Bar */}
+            <li className="search-nav-item">
+              <SearchBar products={products} navigate={navigate} />
+            </li>
             <li className="cart-nav-item">
               <CartIcon itemCount={getCartItemCount()} onClick={toggleCart} />
             </li>
@@ -215,7 +276,7 @@ function App() {
           </>
         )}
         
-        {currentPage === 'products' && <ProductsPage updateCartCount={updateCartCount} />}
+        {currentPage === 'products' && <ProductsPage updateCartCount={updateCartCount} products={products} searchParams={searchParams} />}
         {currentPage === 'contact' && <ContactPage />}
         
         {currentPage === 'login' && (
@@ -417,7 +478,7 @@ function App() {
           </div>
           <div className="footer-section">
             <h3>Contact Us</h3>
-            <p>Email: zaiku@gmail.com</p>
+            <p>Email: zaiku.info@gmail.com</p>
           </div>
         </div>
         <div className="footer-bottom">
@@ -428,69 +489,32 @@ function App() {
   );
 }
 
-// ProductsPage Component (included in the same file)
-function ProductsPage({ updateCartCount }) {
+// ProductsPage Component (modified to include search functionality)
+function ProductsPage({ updateCartCount, products, searchParams }) {
   const [activeCategory, setActiveCategory] = useState('All');
+  const [searchResults, setSearchResults] = useState(products);
   
-  // Product data
-  const products = [
-    {
-      id: 1,
-      name: 'Dragon Silk Jacket',
-      price: 129.99,
-      image: 'https://via.placeholder.com/300x400?text=Dragon+Silk+Jacket',
-      category: 'Outerwear',
-      description: 'Luxurious silk jacket featuring an intricate dragon embroidery design.'
-    },
-    {
-      id: 2,
-      name: 'Koi Pattern Shirt',
-      price: 69.99,
-      image: 'https://via.placeholder.com/300x400?text=Koi+Pattern+Shirt',
-      category: 'Shirts',
-      description: 'Breathable cotton shirt with a subtle koi fish pattern throughout.'
-    },
-    {
-      id: 3,
-      name: 'Tiger Embroidered Cap',
-      price: 34.99,
-      image: 'https://via.placeholder.com/300x400?text=Tiger+Cap',
-      category: 'Accessories',
-      description: 'Stylish cap featuring a beautifully embroidered tiger design.'
-    },
-    {
-      id: 4,
-      name: 'Cherry Blossom Tee',
-      price: 49.99,
-      image: 'https://via.placeholder.com/300x400?text=Cherry+Blossom+Tee',
-      category: 'Shirts',
-      description: 'Soft cotton t-shirt with delicate cherry blossom print.'
-    },
-    {
-      id: 5,
-      name: 'Dragon Scale Hoodie',
-      price: 89.99,
-      image: 'https://via.placeholder.com/300x400?text=Dragon+Hoodie',
-      category: 'Outerwear',
-      description: 'Comfortable hoodie with a unique dragon scale pattern and embroidery.'
-    },
-    {
-      id: 6,
-      name: 'Lotus Silk Scarf',
-      price: 45.99,
-      image: 'https://via.placeholder.com/300x400?text=Lotus+Scarf',
-      category: 'Accessories',
-      description: 'Elegant silk scarf with lotus flower motifs in vibrant colors.'
+  // Apply search filter when searchParams change
+  useEffect(() => {
+    if (searchParams && searchParams.search) {
+      const filteredProducts = products.filter(product => 
+        product.name.toLowerCase().includes(searchParams.search.toLowerCase()) ||
+        product.description.toLowerCase().includes(searchParams.search.toLowerCase()) ||
+        product.category.toLowerCase().includes(searchParams.search.toLowerCase())
+      );
+      setSearchResults(filteredProducts);
+    } else {
+      setSearchResults(products);
     }
-  ];
+  }, [searchParams, products]);
 
   // Categories
   const categories = ['All', 'Outerwear', 'Shirts', 'Accessories'];
 
-  // Filter products by category
+  // Filter products by category and search
   const filteredProducts = activeCategory === 'All' 
-    ? products 
-    : products.filter(product => product.category === activeCategory);
+    ? searchResults 
+    : searchResults.filter(product => product.category === activeCategory);
 
   // Add item to cart
   const addToCart = (product) => {
@@ -537,6 +561,16 @@ function ProductsPage({ updateCartCount }) {
       </div>
       
       <div className="products-content">
+        {/* Display search results message if searching */}
+        {searchParams && searchParams.search && (
+          <div className="search-results-info">
+            <p>
+              Showing results for: <strong>{searchParams.search}</strong> 
+              ({filteredProducts.length} {filteredProducts.length === 1 ? 'product' : 'products'} found)
+            </p>
+          </div>
+        )}
+        
         <div className="category-filter">
           {categories.map(category => (
             <button 
@@ -549,29 +583,35 @@ function ProductsPage({ updateCartCount }) {
           ))}
         </div>
         
-        <div className="products-grid">
-          {filteredProducts.map(product => (
-            <div className="product-card" key={product.id}>
-              <img 
-                src={product.image} 
-                alt={product.name} 
-                className="product-image" 
-              />
-              <div className="product-info">
-                <span className="product-category">{product.category}</span>
-                <h3>{product.name}</h3>
-                <p className="product-description">{product.description}</p>
-                <p className="product-price">${product.price}</p>
-                <button 
-                  className="product-button"
-                  onClick={() => addToCart(product)}
-                >
-                  Add to Cart
-                </button>
+        {filteredProducts.length === 0 ? (
+          <div className="no-products-found">
+            <p>No products found matching your criteria.</p>
+          </div>
+        ) : (
+          <div className="products-grid">
+            {filteredProducts.map(product => (
+              <div className="product-card" key={product.id}>
+                <img 
+                  src={product.image} 
+                  alt={product.name} 
+                  className="product-image" 
+                />
+                <div className="product-info">
+                  <span className="product-category">{product.category}</span>
+                  <h3>{product.name}</h3>
+                  <p className="product-description">{product.description}</p>
+                  <p className="product-price">${product.price}</p>
+                  <button 
+                    className="product-button"
+                    onClick={() => addToCart(product)}
+                  >
+                    Add to Cart
+                  </button>
+                </div>
               </div>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );

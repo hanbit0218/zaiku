@@ -610,3 +610,51 @@ footer {
   align-items: center;
   padding: 15px 30px;
 }
+
+/* Search nav item styles */
+.search-nav-item {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+/* Add space between search and cart icons */
+.search-nav-item + .cart-nav-item {
+  margin-left: 0.5rem;
+}
+
+/* Mobile adjustments for search and cart icons */
+@media (max-width: 768px) {
+  .app-header nav ul {
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  
+  .search-nav-item,
+  .cart-nav-item,
+  .auth-nav-item {
+    margin: 0.5rem;
+  }
+  
+  .search-form-container.open {
+    width: 230px;
+  }
+}
+
+@media (max-width: 480px) {
+  .app-header nav ul {
+    margin-top: 1rem;
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  
+  .app-header nav ul li {
+    margin: 0.25rem 0.5rem;
+  }
+  
+  .search-nav-item,
+  .cart-nav-item {
+    order: -1;
+  }
+}
