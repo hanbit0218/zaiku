@@ -49,7 +49,6 @@ button {
 }
 
 /* App Header */
-
 .app-header {
   background-color: var(--secondary-color);
   color: var(--light-text);
@@ -80,6 +79,46 @@ button {
 .app-header nav ul li a:hover,
 .app-header nav ul li a.active {
   color: var(--primary-color);
+}
+
+/* Fix for auth dropdown menu in navbar */
+.auth-nav-item {
+  position: relative;
+}
+
+.auth-dropdown {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  background-color: white;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+  border-radius: 8px;
+  min-width: 180px;
+  z-index: 100;
+  margin-top: 0.5rem;
+  padding: 0.5rem 0;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(10px);
+  transition: all 0.3s ease;
+}
+
+.auth-nav-item:hover .auth-dropdown {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0);
+}
+
+.auth-dropdown a {
+  color: var(--secondary-color) !important;
+  padding: 0.75rem 1.5rem !important;
+  display: block;
+}
+
+/* Cart icon in nav */
+.cart-nav-item {
+  display: flex;
+  align-items: center;
 }
 
 /* Hero Sections with fixed height */
@@ -561,7 +600,7 @@ footer {
 
 .logo {
   height: 40px;
-  margin-right: 10px;
+  margin-right: 20px;
 }
 
 /* Header layout adjustments */

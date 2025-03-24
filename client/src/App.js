@@ -1,20 +1,42 @@
+// src/App.js
 import React, { useState, useEffect } from 'react';
 import './styles/App.css';
+import './components/auth/Auth.css';
+import CartIcon from './components/cart/CartIcon';
+import ShoppingCart from './components/cart/ShoppingCart';
 
 function App() {
   const [currentPage, setCurrentPage] = useState('home');
-
+  const [isCartOpen, setIsCartOpen] = useState(false);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [cartCount, setCartCount] = useState(0);
+  
+  // Password visibility states
+  const [showLoginPassword, setShowLoginPassword] = useState(false);
+  const [showRegisterPassword, setShowRegisterPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  
   useEffect(() => {
     const path = window.location.pathname;
     if (path === '/products') {
       setCurrentPage('products');
     } else if (path === '/contact') {
       setCurrentPage('contact');
+    } else if (path === '/login') {
+      setCurrentPage('login');
+    } else if (path === '/register') {
+      setCurrentPage('register');
+    } else if (path === '/profile') {
+      setCurrentPage('profile');
     } else {
       setCurrentPage('home');
     }
 
     window.addEventListener('popstate', handlePopState);
+    
+    // Update cart count when component mounts
+    updateCartCount();
+    
     return () => window.removeEventListener('popstate', handlePopState);
   }, []);
 
@@ -24,6 +46,12 @@ function App() {
       setCurrentPage('products');
     } else if (path === '/contact') {
       setCurrentPage('contact');
+    } else if (path === '/login') {
+      setCurrentPage('login');
+    } else if (path === '/register') {
+      setCurrentPage('register');
+    } else if (path === '/profile') {
+      setCurrentPage('profile');
     } else {
       setCurrentPage('home');
     }
@@ -35,12 +63,57 @@ function App() {
     window.history.pushState({}, '', url);
   };
 
+  // Update cart count
+  const updateCartCount = () => {
+    const savedCart = localStorage.getItem('cart');
+    if (savedCart) {
+      const cart = JSON.parse(savedCart);
+      // Count total quantity of all items
+      const totalItems = cart.reduce((total, item) => total + item.quantity, 0);
+      setCartCount(totalItems);
+    } else {
+      setCartCount(0);
+    }
+  };
+
+  // Get cart item count for display
+  const getCartItemCount = () => {
+    return cartCount;
+  };
+
+  const toggleCart = () => {
+    setIsCartOpen(!isCartOpen);
+  };
+  
+  const handleLogin = () => {
+    setIsLoggedIn(true);
+    navigate('home');
+  };
+  
+  const handleLogout = () => {
+    setIsLoggedIn(false);
+    navigate('home');
+  };
+  
+  // Password toggle functions
+  const toggleLoginPasswordVisibility = () => {
+    setShowLoginPassword(!showLoginPassword);
+  };
+
+  const toggleRegisterPasswordVisibility = () => {
+    setShowRegisterPassword(!showRegisterPassword);
+  };
+
+  const toggleConfirmPasswordVisibility = () => {
+    setShowConfirmPassword(!showConfirmPassword);
+  };
+
   return (
     <div className="app">
       <header className="app-header">
         <div className="logo-container">
           <img src='logo.png' alt="ZAIKU Logo" className="logo" />
-          <h1>ZAIKU</h1>
+          <h1>Z A I K U</h1>
         </div>
         <nav>
           <ul>
@@ -70,6 +143,41 @@ function App() {
               >
                 Contact
               </a>
+            </li>
+            <li className="auth-nav-item">
+              {isLoggedIn ? (
+                <a 
+                  href="#" 
+                  onClick={(e) => { e.preventDefault(); navigate('profile'); }}
+                  className={currentPage === 'profile' ? 'active' : ''}
+                >
+                  Profile
+                </a>
+              ) : (
+                <a 
+                  href="#" 
+                  onClick={(e) => { e.preventDefault(); navigate('login'); }}
+                  className={currentPage === 'login' || currentPage === 'register' ? 'active' : ''}
+                >
+                  Login
+                </a>
+              )}
+              <div className="auth-dropdown">
+                {isLoggedIn ? (
+                  <>
+                    <a href="#" onClick={(e) => {e.preventDefault(); navigate('profile')}}>My Profile</a>
+                    <a href="#" onClick={(e) => {e.preventDefault(); handleLogout()}}>Logout</a>
+                  </>
+                ) : (
+                  <>
+                    <a href="#" onClick={(e) => {e.preventDefault(); navigate('login')}}>Login</a>
+                    <a href="#" onClick={(e) => {e.preventDefault(); navigate('register')}}>Register</a>
+                  </>
+                )}
+              </div>
+            </li>
+            <li className="cart-nav-item">
+              <CartIcon itemCount={getCartItemCount()} onClick={toggleCart} />
             </li>
           </ul>
         </nav>
@@ -107,14 +215,189 @@ function App() {
           </>
         )}
         
-        {currentPage === 'products' && (
-          <ProductsPage />
+        {currentPage === 'products' && <ProductsPage updateCartCount={updateCartCount} />}
+        {currentPage === 'contact' && <ContactPage />}
+        
+        {currentPage === 'login' && (
+          <div className="auth-container">
+            <div className="auth-form-container">
+              <h2>Welcome Back</h2>
+              <p>Login to access your account and explore our exclusive collections</p>
+              
+              <form className="auth-form" onSubmit={(e) => { e.preventDefault(); handleLogin(); }}>
+                <div className="form-group">
+                  <label htmlFor="email">Email</label>
+                  <input type="email" id="email" name="email" placeholder="your@email.com" />
+                </div>
+                
+                <div className="form-group password-field">
+                  <label htmlFor="password">Password</label>
+                  <div className="password-input-container">
+                    <input 
+                      type={showLoginPassword ? "text" : "password"} 
+                      id="password" 
+                      name="password" 
+                      placeholder="Enter your password"
+                    />
+                    <button 
+                      type="button" 
+                      className="password-toggle" 
+                      onClick={toggleLoginPasswordVisibility}
+                      aria-label={showLoginPassword ? "Hide password" : "Show password"}
+                    >
+                      {showLoginPassword ? (
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="eye-icon">
+                          <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                          <circle cx="12" cy="12" r="3"></circle>
+                        </svg>
+                      ) : (
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="eye-icon">
+                          <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path>
+                          <line x1="1" y1="1" x2="23" y2="23"></line>
+                        </svg>
+                      )}
+                    </button>
+                  </div>
+                </div>
+                
+                <div className="form-group checkbox">
+                  <input type="checkbox" id="rememberMe" name="rememberMe" />
+                  <label htmlFor="rememberMe">Remember me</label>
+                </div>
+                
+                <button type="submit" className="auth-button">Login</button>
+              </form>
+              
+              <div className="auth-footer">
+                Don't have an account? <a href="#" onClick={(e) => { e.preventDefault(); navigate('register'); }}>Register</a>
+              </div>
+            </div>
+          </div>
         )}
         
-        {currentPage === 'contact' && (
-          <ContactPage />
+        {currentPage === 'register' && (
+          <div className="auth-container">
+            <div className="auth-form-container">
+              <h2>Create an Account</h2>
+              <p>Join ZAIKU and explore our unique collection of Asian-inspired fashion</p>
+              
+              <form className="auth-form" onSubmit={(e) => { e.preventDefault(); navigate('login'); }}>
+                <div className="form-group">
+                  <label htmlFor="username">Username</label>
+                  <input type="text" id="username" name="username" placeholder="Choose a username" />
+                </div>
+                
+                <div className="form-group">
+                  <label htmlFor="email">Email</label>
+                  <input type="email" id="email" name="email" placeholder="your@email.com" />
+                </div>
+                
+                <div className="form-group password-field">
+                  <label htmlFor="password">Password</label>
+                  <div className="password-input-container">
+                    <input 
+                      type={showRegisterPassword ? "text" : "password"} 
+                      id="password" 
+                      name="password" 
+                      placeholder="Create a strong password"
+                    />
+                    <button 
+                      type="button" 
+                      className="password-toggle" 
+                      onClick={toggleRegisterPasswordVisibility}
+                      aria-label={showRegisterPassword ? "Hide password" : "Show password"}
+                    >
+                      {showRegisterPassword ? (
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="eye-icon">
+                          <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                          <circle cx="12" cy="12" r="3"></circle>
+                        </svg>
+                      ) : (
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="eye-icon">
+                          <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path>
+                          <line x1="1" y1="1" x2="23" y2="23"></line>
+                        </svg>
+                      )}
+                    </button>
+                  </div>
+                </div>
+                
+                <div className="form-group password-field">
+                  <label htmlFor="confirmPassword">Confirm Password</label>
+                  <div className="password-input-container">
+                    <input 
+                      type={showConfirmPassword ? "text" : "password"} 
+                      id="confirmPassword" 
+                      name="confirmPassword" 
+                      placeholder="Confirm your password"
+                    />
+                    <button 
+                      type="button" 
+                      className="password-toggle" 
+                      onClick={toggleConfirmPasswordVisibility}
+                      aria-label={showConfirmPassword ? "Hide password" : "Show password"}
+                    >
+                      {showConfirmPassword ? (
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="eye-icon">
+                          <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                          <circle cx="12" cy="12" r="3"></circle>
+                        </svg>
+                      ) : (
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="eye-icon">
+                          <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path>
+                          <line x1="1" y1="1" x2="23" y2="23"></line>
+                        </svg>
+                      )}
+                    </button>
+                  </div>
+                </div>
+                
+                <button type="submit" className="auth-button">Create Account</button>
+              </form>
+              
+              <div className="auth-footer">
+                Already have an account? <a href="#" onClick={(e) => { e.preventDefault(); navigate('login'); }}>Log In</a>
+              </div>
+            </div>
+          </div>
+        )}
+        
+        {currentPage === 'profile' && (
+          <div className="auth-container">
+            <div className="auth-form-container profile-container">
+              <h2>My Profile</h2>
+              
+              <div className="profile-info">
+                <div className="profile-field">
+                  <span className="profile-label">Username:</span>
+                  <span className="profile-value">JohnDoe</span>
+                </div>
+                
+                <div className="profile-field">
+                  <span className="profile-label">Email:</span>
+                  <span className="profile-value">john.doe@example.com</span>
+                </div>
+                
+                <div className="profile-field">
+                  <span className="profile-label">Member since:</span>
+                  <span className="profile-value">March 23, 2025</span>
+                </div>
+              </div>
+              
+              <div className="profile-actions">
+                <button className="auth-button secondary">Edit Profile</button>
+                <button className="auth-button" onClick={handleLogout}>Logout</button>
+              </div>
+            </div>
+          </div>
         )}
       </main>
+      
+      <ShoppingCart 
+        isOpen={isCartOpen} 
+        onClose={() => setIsCartOpen(false)} 
+        updateCartCount={updateCartCount}
+      />
       
       <footer>
         <div className="footer-content">
@@ -128,6 +411,8 @@ function App() {
               <li><a href="#" onClick={(e) => { e.preventDefault(); navigate('home'); }}>Home</a></li>
               <li><a href="#" onClick={(e) => { e.preventDefault(); navigate('products'); }}>Products</a></li>
               <li><a href="#" onClick={(e) => { e.preventDefault(); navigate('contact'); }}>Contact</a></li>
+              <li><a href="#" onClick={(e) => { e.preventDefault(); navigate('login'); }}>Login</a></li>
+              <li><a href="#" onClick={(e) => { e.preventDefault(); navigate('register'); }}>Register</a></li>
             </ul>
           </div>
           <div className="footer-section">
@@ -143,8 +428,8 @@ function App() {
   );
 }
 
-// Products Page Component (included in the same file to avoid import issues)
-function ProductsPage() {
+// ProductsPage Component (included in the same file)
+function ProductsPage({ updateCartCount }) {
   const [activeCategory, setActiveCategory] = useState('All');
   
   // Product data
@@ -207,6 +492,43 @@ function ProductsPage() {
     ? products 
     : products.filter(product => product.category === activeCategory);
 
+  // Add item to cart
+  const addToCart = (product) => {
+    const cartItem = {
+      id: product.id,
+      name: product.name,
+      price: product.price,
+      image: product.image,
+      quantity: 1
+    };
+    
+    // Get existing cart or create empty one
+    const savedCart = localStorage.getItem('cart');
+    let cart = savedCart ? JSON.parse(savedCart) : [];
+    
+    // Check if item already in cart
+    const existingItemIndex = cart.findIndex(item => item.id === product.id);
+    
+    if (existingItemIndex !== -1) {
+      // Update quantity if item already exists
+      cart[existingItemIndex].quantity += 1;
+    } else {
+      // Add new item
+      cart.push(cartItem);
+    }
+    
+    // Save updated cart
+    localStorage.setItem('cart', JSON.stringify(cart));
+    
+    // Update cart count in the navbar
+    if (updateCartCount) {
+      updateCartCount();
+    }
+    
+    // Show confirmation message
+    alert(`${product.name} added to cart!`);
+  };
+
   return (
     <div className="products-page">
       <div className="products-hero">
@@ -240,7 +562,12 @@ function ProductsPage() {
                 <h3>{product.name}</h3>
                 <p className="product-description">{product.description}</p>
                 <p className="product-price">${product.price}</p>
-                <button className="product-button">Add to Cart</button>
+                <button 
+                  className="product-button"
+                  onClick={() => addToCart(product)}
+                >
+                  Add to Cart
+                </button>
               </div>
             </div>
           ))}
@@ -250,7 +577,7 @@ function ProductsPage() {
   );
 }
 
-// Contact Page Component (included in the same file to avoid import issues)
+// ContactPage Component (included in the same file)
 function ContactPage() {
   const [formData, setFormData] = useState({
     name: '',
