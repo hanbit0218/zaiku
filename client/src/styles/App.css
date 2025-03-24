@@ -49,25 +49,6 @@ button {
 }
 
 /* App Header */
-/* Add these styles to your App.css file */
-
-.logo-container {
-  display: flex;
-  align-items: center;
-}
-
-.logo {
-  height: 40px;
-  margin-right: 10px;
-}
-
-/* If you need to adjust the header layout to accommodate the logo */
-.app-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 15px 30px;
-}
 
 .app-header {
   background-color: var(--secondary-color);
@@ -569,4 +550,24 @@ footer {
     width: 100%;
     max-width: 200px;
   }
+}
+
+
+/* Logo styles */
+.logo-container {
+  display: flex;
+  align-items: center;
+}
+
+.logo {
+  height: 40px;
+  margin-right: 10px;
+}
+
+/* Header layout adjustments */
+.app-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 15px 30px;
 }

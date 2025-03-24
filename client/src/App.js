@@ -39,7 +39,7 @@ function App() {
     <div className="app">
       <header className="app-header">
         <div className="logo-container">
-          <img src="logo.png" alt="ZAIKU Logo" className="logo" />
+          <img src='logo.png' alt="ZAIKU Logo" className="logo" />
           <h1>ZAIKU</h1>
         </div>
         <nav>
