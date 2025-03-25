@@ -1,31 +1,24 @@
+// server/routes/orderRoutes.js (updated)
 const express = require('express');
 const router = express.Router();
 const { 
   createOrder, 
   getOrderById, 
   updateOrderToPaid, 
-  getMyOrders 
+  getMyOrders,
+  getAllOrders,
+  updateOrderToDelivered
 } = require('../controllers/orderController');
-const { protect } = require('../middleware/authMiddleware');
+const { protect, admin } = require('../middleware/authMiddleware');
 
-// @route   POST /api/orders
-// @desc    Create a new order
-// @access  Private
+// Regular user routes
 router.post('/', protect, createOrder);
-
-// @route   GET /api/orders/myorders
-// @desc    Get logged in user orders
-// @access  Private
 router.get('/myorders', protect, getMyOrders);
-
-// @route   GET /api/orders/:id
-// @desc    Get order by ID
-// @access  Private
 router.get('/:id', protect, getOrderById);
-
-// @route   PUT /api/orders/:id/pay
-// @desc    Update order to paid
-// @access  Private
 router.put('/:id/pay', protect, updateOrderToPaid);
+
+// Admin routes - add these
+router.get('/', protect, admin, getAllOrders);
+router.put('/:id/deliver', protect, admin, updateOrderToDelivered);
 
 module.exports = router;

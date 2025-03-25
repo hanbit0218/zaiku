@@ -6,6 +6,7 @@ import CartIcon from './components/cart/CartIcon';
 import ShoppingCart from './components/cart/ShoppingCart';
 import SearchBar from './components/search/SearchBar';
 import PrivacyPolicy from './components/PrivacyPolicy';
+import AdminDashboard from './components/admin/AdminDashboard';
 
 // Import the authentication context
 import { AuthProvider, useAuth } from './context/AuthContext';
@@ -115,6 +116,8 @@ function AppContent() {
       setCurrentPage('google-callback');
     } else if (path === '/privacy-policy') {
       setCurrentPage('privacy-policy');
+    } else if (path === '/admin') {
+      setCurrentPage('admin');
     } else {
       setCurrentPage('home');
     }
@@ -143,6 +146,8 @@ function AppContent() {
       setCurrentPage('google-callback');
     } else if (path === '/privacy-policy') {
       setCurrentPage('privacy-policy');
+    } else if (path === '/admin') {
+      setCurrentPage('admin');
     } else {
       setCurrentPage('home');
     }
@@ -275,6 +280,9 @@ function AppContent() {
                 {isLoggedIn ? (
                   <>
                     <a href="#" onClick={(e) => {e.preventDefault(); navigate('profile')}}>My Profile</a>
+                    {currentUser?.isAdmin && (
+                      <a href="#" onClick={(e) => {e.preventDefault(); navigate('admin')}}>Admin Dashboard</a>
+                    )}
                     <a href="#" onClick={(e) => {e.preventDefault(); handleLogout()}}>Logout</a>
                   </>
                 ) : (
@@ -335,6 +343,7 @@ function AppContent() {
         {currentPage === 'profile' && <Profile navigate={navigate} />}
         {currentPage === 'google-callback' && <GoogleCallback navigate={navigate} />}
         {currentPage === 'privacy-policy' && <PrivacyPolicy />}
+        {currentPage === 'admin' && <AdminDashboard navigate={navigate} />}
       </main>
       
       <ShoppingCart 

@@ -1,19 +1,24 @@
+// server/routes/userRoutes.js (updated)
 const express = require('express');
 const router = express.Router();
 const { 
   getUserProfile, 
-  updateUserProfile 
+  updateUserProfile,
+  getUsers,
+  getUserById,
+  updateUser,
+  deleteUser
 } = require('../controllers/userController');
-const { protect } = require('../middleware/authMiddleware');
+const { protect, admin } = require('../middleware/authMiddleware');
 
-// @route   GET /api/users/profile
-// @desc    Get user profile
-// @access  Private
+// Regular user routes
 router.get('/profile', protect, getUserProfile);
-
-// @route   PUT /api/users/profile
-// @desc    Update user profile
-// @access  Private
 router.put('/profile', protect, updateUserProfile);
+
+// Admin routes - add these
+router.get('/', protect, admin, getUsers);
+router.get('/:id', protect, admin, getUserById);
+router.put('/:id', protect, admin, updateUser);
+router.delete('/:id', protect, admin, deleteUser);
 
 module.exports = router;
