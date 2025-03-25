@@ -1,10 +1,11 @@
 // client/src/components/auth/Login.js
 import React, { useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
+import GoogleLoginButton from './GoogleLoginButton';
 import './Auth.css';
 
 function Login({ navigate }) {
-  const { loginUser } = useAuth();
+  const { loginUser, loginWithGoogle } = useAuth();
   const [formData, setFormData] = useState({
     email: '',
     password: '',
@@ -72,6 +73,28 @@ function Login({ navigate }) {
     }
   };
 
+  // Handle Google login success
+  const handleGoogleSuccess = async (tokenResponse) => {
+    try {
+      setIsSubmitting(true);
+      setLoginError('');
+      
+      const result = await loginWithGoogle(tokenResponse);
+      
+      if (result.success) {
+        console.log('Google login successful, redirecting to home');
+        navigate('home');
+      } else {
+        setLoginError(result.message || 'Google login failed');
+      }
+    } catch (error) {
+      console.error('Google login error:', error);
+      setLoginError('An unexpected error occurred with Google login');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   return (
     <div className="auth-container">
       <div className="auth-form-container">
@@ -126,6 +149,13 @@ function Login({ navigate }) {
             {isSubmitting ? 'Logging in...' : 'Login'}
           </button>
         </form>
+        
+        <div className="auth-separator">or</div>
+        
+        <GoogleLoginButton 
+          onSuccess={handleGoogleSuccess} 
+          buttonText="Sign in with Google"
+        />
         
         <div className="auth-footer">
           Don't have an account? <a href="#" onClick={(e) => { e.preventDefault(); navigate('register'); }}>Register</a>

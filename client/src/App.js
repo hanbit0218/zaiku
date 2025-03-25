@@ -5,6 +5,7 @@ import './components/auth/Auth.css';
 import CartIcon from './components/cart/CartIcon';
 import ShoppingCart from './components/cart/ShoppingCart';
 import SearchBar from './components/search/SearchBar';
+import PrivacyPolicy from './components/PrivacyPolicy';
 
 // Import the authentication context
 import { AuthProvider, useAuth } from './context/AuthContext';
@@ -13,6 +14,7 @@ import { AuthProvider, useAuth } from './context/AuthContext';
 import Login from './components/auth/Login';
 import Register from './components/auth/Register';
 import Profile from './components/auth/Profile';
+import GoogleCallback from './components/auth/GoogleCallback';
 
 function App() {
   return (
@@ -28,7 +30,7 @@ function AppContent() {
   const [searchParams, setSearchParams] = useState({ search: '' });
   
   // Get auth context with loginUser
-  const { currentUser, logout, cartCount, updateCartCount, loginUser } = useAuth();
+  const { currentUser, loginUser, logout, cartCount, updateCartCount } = useAuth();
   
   // Use currentUser to determine login status
   const isLoggedIn = !!currentUser;
@@ -109,6 +111,10 @@ function AppContent() {
       setCurrentPage('register');
     } else if (path === '/profile') {
       setCurrentPage('profile');
+    } else if (path === '/auth/google/success') {
+      setCurrentPage('google-callback');
+    } else if (path === '/privacy-policy') {
+      setCurrentPage('privacy-policy');
     } else {
       setCurrentPage('home');
     }
@@ -119,7 +125,7 @@ function AppContent() {
     updateCartCount();
     
     return () => window.removeEventListener('popstate', handlePopState);
-  }, []);
+  }, [updateCartCount]);
 
   const handlePopState = () => {
     const path = window.location.pathname;
@@ -133,6 +139,10 @@ function AppContent() {
       setCurrentPage('register');
     } else if (path === '/profile') {
       setCurrentPage('profile');
+    } else if (path === '/auth/google/success') {
+      setCurrentPage('google-callback');
+    } else if (path === '/privacy-policy') {
+      setCurrentPage('privacy-policy');
     } else {
       setCurrentPage('home');
     }
@@ -320,203 +330,11 @@ function AppContent() {
         
         {currentPage === 'products' && <ProductsPage updateCartCount={updateCartCount} products={products} searchParams={searchParams} />}
         {currentPage === 'contact' && <ContactPage />}
-        
-        {currentPage === 'login' && (
-          <div className="auth-container">
-            <div className="auth-form-container">
-              <h2>Welcome Back</h2>
-              <p>Login to access your account and explore our exclusive collections</p>
-              
-              <form className="auth-form" onSubmit={handleLogin}>
-                <div className="form-group">
-                  <label htmlFor="email">Email</label>
-                  <input 
-                    type="email" 
-                    id="email" 
-                    name="email" 
-                    placeholder="your@email.com"
-                    value={loginFormData.email}
-                    onChange={handleLoginChange}
-                  />
-                </div>
-                
-                <div className="form-group password-field">
-                  <label htmlFor="password">Password</label>
-                  <div className="password-input-container">
-                    <input 
-                      type={showLoginPassword ? "text" : "password"} 
-                      id="password" 
-                      name="password" 
-                      placeholder="Enter your password"
-                      value={loginFormData.password}
-                      onChange={handleLoginChange}
-                    />
-                    <button 
-                      type="button" 
-                      className="password-toggle" 
-                      onClick={toggleLoginPasswordVisibility}
-                      aria-label={showLoginPassword ? "Hide password" : "Show password"}
-                    >
-                      {showLoginPassword ? (
-                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="eye-icon">
-                          <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
-                          <circle cx="12" cy="12" r="3"></circle>
-                        </svg>
-                      ) : (
-                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="eye-icon">
-                          <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path>
-                          <line x1="1" y1="1" x2="23" y2="23"></line>
-                        </svg>
-                      )}
-                    </button>
-                  </div>
-                </div>
-                
-                <div className="form-group checkbox">
-                  <input 
-                    type="checkbox" 
-                    id="rememberMe" 
-                    name="rememberMe"
-                    checked={loginFormData.rememberMe}
-                    onChange={handleLoginChange} 
-                  />
-                  <label htmlFor="rememberMe">Remember me</label>
-                </div>
-                
-                <button type="submit" className="auth-button">Login</button>
-              </form>
-              
-              <div className="auth-footer">
-                Don't have an account? <a href="#" onClick={(e) => { e.preventDefault(); navigate('register'); }}>Register</a>
-              </div>
-            </div>
-          </div>
-        )}
-        
-        {currentPage === 'register' && (
-          <div className="auth-container">
-            <div className="auth-form-container">
-              <h2>Create an Account</h2>
-              <p>Join ZAIKU and explore our unique collection of Asian-inspired fashion</p>
-              
-              <form className="auth-form" onSubmit={(e) => { e.preventDefault(); navigate('login'); }}>
-                <div className="form-group">
-                  <label htmlFor="username">Username</label>
-                  <input type="text" id="username" name="username" placeholder="Choose a username" />
-                </div>
-                
-                <div className="form-group">
-                  <label htmlFor="email">Email</label>
-                  <input type="email" id="email" name="email" placeholder="your@email.com" />
-                </div>
-                
-                <div className="form-group password-field">
-                  <label htmlFor="password">Password</label>
-                  <div className="password-input-container">
-                    <input 
-                      type={showRegisterPassword ? "text" : "password"} 
-                      id="password" 
-                      name="password" 
-                      placeholder="Create a strong password"
-                    />
-                    <button 
-                      type="button" 
-                      className="password-toggle" 
-                      onClick={toggleRegisterPasswordVisibility}
-                      aria-label={showRegisterPassword ? "Hide password" : "Show password"}
-                    >
-                      {showRegisterPassword ? (
-                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="eye-icon">
-                          <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
-                          <circle cx="12" cy="12" r="3"></circle>
-                        </svg>
-                      ) : (
-                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="eye-icon">
-                          <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path>
-                          <line x1="1" y1="1" x2="23" y2="23"></line>
-                        </svg>
-                      )}
-                    </button>
-                  </div>
-                </div>
-                
-                <div className="form-group password-field">
-                  <label htmlFor="confirmPassword">Confirm Password</label>
-                  <div className="password-input-container">
-                    <input 
-                      type={showConfirmPassword ? "text" : "password"} 
-                      id="confirmPassword" 
-                      name="confirmPassword" 
-                      placeholder="Confirm your password"
-                    />
-                    <button 
-                      type="button" 
-                      className="password-toggle" 
-                      onClick={toggleConfirmPasswordVisibility}
-                      aria-label={showConfirmPassword ? "Hide password" : "Show password"}
-                    >
-                      {showConfirmPassword ? (
-                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="eye-icon">
-                          <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
-                          <circle cx="12" cy="12" r="3"></circle>
-                        </svg>
-                      ) : (
-                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="eye-icon">
-                          <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path>
-                          <line x1="1" y1="1" x2="23" y2="23"></line>
-                        </svg>
-                      )}
-                    </button>
-                  </div>
-                </div>
-                
-                <button type="submit" className="auth-button">Create Account</button>
-              </form>
-              
-              <div className="auth-footer">
-                Already have an account? <a href="#" onClick={(e) => { e.preventDefault(); navigate('login'); }}>Log In</a>
-              </div>
-            </div>
-          </div>
-        )}
-        
-        {currentPage === 'profile' && (
-          <div className="auth-container">
-            <div className="auth-form-container profile-container">
-              <h2>My Profile</h2>
-              
-              <div className="profile-info">
-                <div className="profile-field">
-                  <span className="profile-label">Username:</span>
-                  <span className="profile-value">{currentUser?.username || 'User'}</span>
-                </div>
-                
-                <div className="profile-field">
-                  <span className="profile-label">Email:</span>
-                  <span className="profile-value">{currentUser?.email || 'user@example.com'}</span>
-                </div>
-                
-                <div className="profile-field">
-                  <span className="profile-label">Member since:</span>
-                  <span className="profile-value">
-                    {currentUser?.createdAt 
-                      ? new Date(currentUser.createdAt).toLocaleDateString('en-US', {
-                          year: 'numeric',
-                          month: 'long',
-                          day: 'numeric'
-                        })
-                      : 'March 23, 2025'}
-                  </span>
-                </div>
-              </div>
-              
-              <div className="profile-actions">
-                <button className="auth-button secondary">Edit Profile</button>
-                <button className="auth-button" onClick={handleLogout}>Logout</button>
-              </div>
-            </div>
-          </div>
-        )}
+        {currentPage === 'login' && <Login navigate={navigate} />}
+        {currentPage === 'register' && <Register navigate={navigate} />}
+        {currentPage === 'profile' && <Profile navigate={navigate} />}
+        {currentPage === 'google-callback' && <GoogleCallback navigate={navigate} />}
+        {currentPage === 'privacy-policy' && <PrivacyPolicy />}
       </main>
       
       <ShoppingCart 
@@ -539,11 +357,12 @@ function AppContent() {
               <li><a href="#" onClick={(e) => { e.preventDefault(); navigate('contact'); }}>Contact</a></li>
               <li><a href="#" onClick={(e) => { e.preventDefault(); navigate('login'); }}>Login</a></li>
               <li><a href="#" onClick={(e) => { e.preventDefault(); navigate('register'); }}>Register</a></li>
+              <li><a href="#" onClick={(e) => { e.preventDefault(); navigate('privacy-policy'); }}>Privacy Policy</a></li>
             </ul>
           </div>
           <div className="footer-section">
             <h3>Contact Us</h3>
-            <p>Email: zaiku@gmail.com</p>
+            <p>Email: zaiku.info@gmail.com</p>
           </div>
         </div>
         <div className="footer-bottom">
