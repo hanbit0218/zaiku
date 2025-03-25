@@ -1,17 +1,44 @@
-// src/App.js with Search Bar added
+// src/App.js
 import React, { useState, useEffect } from 'react';
 import './styles/App.css';
 import './components/auth/Auth.css';
 import CartIcon from './components/cart/CartIcon';
 import ShoppingCart from './components/cart/ShoppingCart';
-import SearchBar from './components/search/SearchBar'; // Import the new SearchBar component
+import SearchBar from './components/search/SearchBar';
+
+// Import the authentication context
+import { AuthProvider, useAuth } from './context/AuthContext';
+
+// Import the auth components
+import Login from './components/auth/Login';
+import Register from './components/auth/Register';
+import Profile from './components/auth/Profile';
 
 function App() {
+  return (
+    <AuthProvider>
+      <AppContent />
+    </AuthProvider>
+  );
+}
+
+function AppContent() {
   const [currentPage, setCurrentPage] = useState('home');
   const [isCartOpen, setIsCartOpen] = useState(false);
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [cartCount, setCartCount] = useState(0);
   const [searchParams, setSearchParams] = useState({ search: '' });
+  
+  // Get auth context with loginUser
+  const { currentUser, logout, cartCount, updateCartCount, loginUser } = useAuth();
+  
+  // Use currentUser to determine login status
+  const isLoggedIn = !!currentUser;
+  
+  // Form data for login
+  const [loginFormData, setLoginFormData] = useState({
+    email: '',
+    password: '',
+    rememberMe: false
+  });
   
   // Password visibility states
   const [showLoginPassword, setShowLoginPassword] = useState(false);
@@ -120,19 +147,6 @@ function App() {
     window.history.pushState({}, '', url);
   };
 
-  // Update cart count
-  const updateCartCount = () => {
-    const savedCart = localStorage.getItem('cart');
-    if (savedCart) {
-      const cart = JSON.parse(savedCart);
-      // Count total quantity of all items
-      const totalItems = cart.reduce((total, item) => total + item.quantity, 0);
-      setCartCount(totalItems);
-    } else {
-      setCartCount(0);
-    }
-  };
-
   // Get cart item count for display
   const getCartItemCount = () => {
     return cartCount;
@@ -142,14 +156,42 @@ function App() {
     setIsCartOpen(!isCartOpen);
   };
   
-  const handleLogin = () => {
-    setIsLoggedIn(true);
+  const handleLogout = () => {
+    logout();
     navigate('home');
   };
   
-  const handleLogout = () => {
-    setIsLoggedIn(false);
-    navigate('home');
+  // Handle login form changes
+  const handleLoginChange = (e) => {
+    const { name, value, type, checked } = e.target;
+    setLoginFormData({
+      ...loginFormData,
+      [name]: type === 'checkbox' ? checked : value
+    });
+  };
+  
+  // Handle login form submission
+  const handleLogin = async (e) => {
+    e.preventDefault();
+    
+    try {
+      // Use the loginUser function from the auth context
+      const result = await loginUser(
+        loginFormData.email,
+        loginFormData.password,
+        loginFormData.rememberMe
+      );
+      
+      if (result && result.success) {
+        console.log('Login successful, redirecting to home');
+        navigate('home');
+      } else {
+        alert(result?.message || 'Login failed. Please check your credentials.');
+      }
+    } catch (error) {
+      console.error('Login error:', error);
+      alert('An unexpected error occurred. Please try again.');
+    }
   };
   
   // Password toggle functions
@@ -285,10 +327,17 @@ function App() {
               <h2>Welcome Back</h2>
               <p>Login to access your account and explore our exclusive collections</p>
               
-              <form className="auth-form" onSubmit={(e) => { e.preventDefault(); handleLogin(); }}>
+              <form className="auth-form" onSubmit={handleLogin}>
                 <div className="form-group">
                   <label htmlFor="email">Email</label>
-                  <input type="email" id="email" name="email" placeholder="your@email.com" />
+                  <input 
+                    type="email" 
+                    id="email" 
+                    name="email" 
+                    placeholder="your@email.com"
+                    value={loginFormData.email}
+                    onChange={handleLoginChange}
+                  />
                 </div>
                 
                 <div className="form-group password-field">
@@ -299,6 +348,8 @@ function App() {
                       id="password" 
                       name="password" 
                       placeholder="Enter your password"
+                      value={loginFormData.password}
+                      onChange={handleLoginChange}
                     />
                     <button 
                       type="button" 
@@ -322,7 +373,13 @@ function App() {
                 </div>
                 
                 <div className="form-group checkbox">
-                  <input type="checkbox" id="rememberMe" name="rememberMe" />
+                  <input 
+                    type="checkbox" 
+                    id="rememberMe" 
+                    name="rememberMe"
+                    checked={loginFormData.rememberMe}
+                    onChange={handleLoginChange} 
+                  />
                   <label htmlFor="rememberMe">Remember me</label>
                 </div>
                 
@@ -431,17 +488,25 @@ function App() {
               <div className="profile-info">
                 <div className="profile-field">
                   <span className="profile-label">Username:</span>
-                  <span className="profile-value">JohnDoe</span>
+                  <span className="profile-value">{currentUser?.username || 'User'}</span>
                 </div>
                 
                 <div className="profile-field">
                   <span className="profile-label">Email:</span>
-                  <span className="profile-value">john.doe@example.com</span>
+                  <span className="profile-value">{currentUser?.email || 'user@example.com'}</span>
                 </div>
                 
                 <div className="profile-field">
                   <span className="profile-label">Member since:</span>
-                  <span className="profile-value">March 23, 2025</span>
+                  <span className="profile-value">
+                    {currentUser?.createdAt 
+                      ? new Date(currentUser.createdAt).toLocaleDateString('en-US', {
+                          year: 'numeric',
+                          month: 'long',
+                          day: 'numeric'
+                        })
+                      : 'March 23, 2025'}
+                  </span>
                 </div>
               </div>
               
@@ -478,7 +543,7 @@ function App() {
           </div>
           <div className="footer-section">
             <h3>Contact Us</h3>
-            <p>Email: zaiku.info@gmail.com</p>
+            <p>Email: zaiku@gmail.com</p>
           </div>
         </div>
         <div className="footer-bottom">
@@ -600,7 +665,7 @@ function ProductsPage({ updateCartCount, products, searchParams }) {
                   <span className="product-category">{product.category}</span>
                   <h3>{product.name}</h3>
                   <p className="product-description">{product.description}</p>
-                  <p className="product-price">${product.price}</p>
+                  <p className="product-price">${product.price.toFixed(2)}</p>
                   <button 
                     className="product-button"
                     onClick={() => addToCart(product)}
@@ -617,7 +682,7 @@ function ProductsPage({ updateCartCount, products, searchParams }) {
   );
 }
 
-// ContactPage Component (included in the same file)
+// ContactPage Component with backend email functionality
 function ContactPage() {
   const [formData, setFormData] = useState({
     name: '',
@@ -629,6 +694,7 @@ function ContactPage() {
   const [formErrors, setFormErrors] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitSuccess, setSubmitSuccess] = useState(false);
+  const [submitError, setSubmitError] = useState('');
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -636,6 +702,20 @@ function ContactPage() {
       ...formData,
       [name]: value
     });
+    
+    // Clear error when user types
+    if (formErrors[name]) {
+      setFormErrors({
+        ...formErrors,
+        [name]: ''
+      });
+    }
+  };
+
+  const validateEmail = (email) => {
+    // Email validation regex
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(String(email).toLowerCase());
   };
 
   const validate = () => {
@@ -647,8 +727,8 @@ function ContactPage() {
     
     if (!formData.email.trim()) {
       errors.email = 'Email is required';
-    } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
-      errors.email = 'Email address is invalid';
+    } else if (!validateEmail(formData.email)) {
+      errors.email = 'Please enter a valid email address';
     }
     
     if (!formData.message.trim()) {
@@ -658,8 +738,9 @@ function ContactPage() {
     return errors;
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
+    setSubmitError('');
     
     const errors = validate();
     setFormErrors(errors);
@@ -667,11 +748,23 @@ function ContactPage() {
     if (Object.keys(errors).length === 0) {
       setIsSubmitting(true);
       
-      // Simulate sending an email
-      setTimeout(() => {
-        console.log('Form data submitted:', formData);
+      try {
+        // Send data to backend API
+        const response = await fetch('http://localhost:5001/api/contact/send', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(formData),
+        });
         
-        setIsSubmitting(false);
+        const data = await response.json();
+        
+        if (!response.ok) {
+          throw new Error(data.message || 'Failed to send message');
+        }
+        
+        console.log('Message sent successfully');
         setSubmitSuccess(true);
         
         // Reset form after successful submission
@@ -686,7 +779,12 @@ function ContactPage() {
         setTimeout(() => {
           setSubmitSuccess(false);
         }, 5000);
-      }, 1500);
+      } catch (error) {
+        console.error('Contact form submission error:', error);
+        setSubmitError(error.message || 'Failed to send your message. Please try again later.');
+      } finally {
+        setIsSubmitting(false);
+      }
     }
   };
 
@@ -710,6 +808,12 @@ function ContactPage() {
             </div>
           ) : (
             <form className="contact-form" onSubmit={handleSubmit}>
+              {submitError && (
+                <div className="error-banner">
+                  {submitError}
+                </div>
+              )}
+              
               <div className="form-group">
                 <label htmlFor="name">Name *</label>
                 <input

@@ -1,9 +1,10 @@
-// src/components/auth/Register.js
+// client/src/components/auth/Register.js
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../../context/AuthContext';
 import './Auth.css';
 
-function Register() {
+function Register({ navigate }) {
+  const { registerUser, loginUser } = useAuth();
   const [formData, setFormData] = useState({
     username: '',
     email: '',
@@ -14,7 +15,6 @@ function Register() {
   const [errors, setErrors] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitMessage, setSubmitMessage] = useState('');
-  const navigate = useNavigate();
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -66,34 +66,34 @@ function Register() {
     
     if (Object.keys(validationErrors).length === 0) {
       setIsSubmitting(true);
+      setSubmitMessage('');
       
       try {
-        const response = await fetch('/api/auth/register', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            username: formData.username,
-            email: formData.email,
-            password: formData.password
-          }),
-        });
+        console.log('Submitting registration form...');
+        const registerResult = await registerUser(formData.username, formData.email, formData.password);
         
-        const data = await response.json();
-        
-        if (response.ok) {
-          setSubmitMessage('Registration successful! You can now log in.');
-          setTimeout(() => {
-            navigate('/login');
-          }, 2000);
+        if (registerResult.success) {
+          setSubmitMessage('Registration successful! Logging you in...');
+          
+          // Automatically log in the user after successful registration
+          const loginResult = await loginUser(formData.email, formData.password, true);
+          
+          if (loginResult.success) {
+            console.log('Auto-login successful, redirecting to home');
+            navigate('home');
+          } else {
+            // If auto-login fails, redirect to login page
+            setSubmitMessage('Registration successful! Please log in with your credentials.');
+            setTimeout(() => {
+              navigate('login');
+            }, 2000);
+          }
         } else {
-          setSubmitMessage(data.message || 'Registration failed. Please try again.');
-          setErrors(data.errors || {});
+          setSubmitMessage(registerResult.message || 'Registration failed. Please try again.');
         }
       } catch (error) {
-        setSubmitMessage('An error occurred. Please try again later.');
-        console.error('Registration error:', error);
+        console.error('Registration submission error:', error);
+        setSubmitMessage('An unexpected error occurred. Please try again later.');
       }
       
       setIsSubmitting(false);
@@ -171,7 +171,7 @@ function Register() {
         </form>
         
         <div className="auth-footer">
-          Already have an account? <a href="/login" onClick={(e) => { e.preventDefault(); navigate('/login'); }}>Log In</a>
+          Already have an account? <a href="#" onClick={(e) => { e.preventDefault(); navigate('login'); }}>Log In</a>
         </div>
       </div>
     </div>

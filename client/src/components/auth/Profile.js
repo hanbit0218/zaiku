@@ -1,71 +1,53 @@
-// src/components/auth/Profile.js
+// client/src/components/auth/Profile.js
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../../context/AuthContext';
+import { getUserProfile, updateUserProfile } from '../../api';
 import './Auth.css';
 
-function Profile() {
-  const [user, setUser] = useState(null);
+function Profile({ navigate }) {
+  const { currentUser, logout } = useAuth();
+  const [profileData, setProfileData] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
-  const navigate = useNavigate();
+  const [updateSuccess, setUpdateSuccess] = useState(false);
 
   useEffect(() => {
     const fetchUserProfile = async () => {
       setIsLoading(true);
-      
-      // Get token from storage
-      const token = localStorage.getItem('token') || sessionStorage.getItem('token');
-      
-      if (!token) {
-        setError('You must be logged in to view this page');
-        setIsLoading(false);
-        setTimeout(() => navigate('/login'), 2000);
-        return;
-      }
+      setError('');
       
       try {
-        const response = await fetch('/api/auth/profile', {
-          headers: {
-            'Authorization': `Bearer ${token}`
-          }
-        });
+        console.log('Fetching user profile data...');
+        const result = await getUserProfile();
         
-        if (response.ok) {
-          const userData = await response.json();
-          setUser(userData);
+        if (result.success) {
+          console.log('Profile data fetched:', result.data);
+          setProfileData(result.data);
         } else {
-          // Handle unauthorized or other errors
-          if (response.status === 401) {
-            // Clear invalid token
-            localStorage.removeItem('token');
-            sessionStorage.removeItem('token');
-            localStorage.removeItem('user');
-            
-            setError('Session expired. Please log in again.');
-            setTimeout(() => navigate('/login'), 2000);
-          } else {
-            setError('Failed to load profile data');
-          }
+          setError('Failed to load profile data. Please try refreshing the page.');
         }
       } catch (error) {
-        setError('An error occurred while loading your profile');
         console.error('Profile loading error:', error);
+        setError('An error occurred while loading your profile');
       }
       
       setIsLoading(false);
     };
     
     fetchUserProfile();
-  }, [navigate]);
+  }, []);
 
   const handleLogout = () => {
-    // Clear token and user data
-    localStorage.removeItem('token');
-    sessionStorage.removeItem('token');
-    localStorage.removeItem('user');
-    
-    // Redirect to home page
-    navigate('/');
+    logout();
+    navigate('home');
+  };
+
+  const formatDate = (dateString) => {
+    return new Date(dateString).toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
+    });
   };
 
   if (isLoading) {
@@ -84,6 +66,7 @@ function Profile() {
         <div className="auth-form-container">
           <h2>Error</h2>
           <div className="message error">{error}</div>
+          <button className="auth-button" onClick={handleLogout}>Back to Home</button>
         </div>
       </div>
     );
@@ -94,20 +77,26 @@ function Profile() {
       <div className="auth-form-container profile-container">
         <h2>My Profile</h2>
         
+        {updateSuccess && (
+          <div className="message success">Profile updated successfully!</div>
+        )}
+        
         <div className="profile-info">
           <div className="profile-field">
             <span className="profile-label">Username:</span>
-            <span className="profile-value">{user.username}</span>
+            <span className="profile-value">{profileData?.username || currentUser?.username}</span>
           </div>
           
           <div className="profile-field">
             <span className="profile-label">Email:</span>
-            <span className="profile-value">{user.email}</span>
+            <span className="profile-value">{profileData?.email || currentUser?.email}</span>
           </div>
           
           <div className="profile-field">
             <span className="profile-label">Member since:</span>
-            <span className="profile-value">{new Date(user.createdAt).toLocaleDateString()}</span>
+            <span className="profile-value">
+              {profileData?.createdAt ? formatDate(profileData.createdAt) : 'N/A'}
+            </span>
           </div>
         </div>
         

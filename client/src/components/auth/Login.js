@@ -1,19 +1,19 @@
-// src/components/auth/Login.js
+// client/src/components/auth/Login.js
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../../context/AuthContext';
 import './Auth.css';
 
-function Login() {
+function Login({ navigate }) {
+  const { loginUser } = useAuth();
   const [formData, setFormData] = useState({
     email: '',
     password: '',
-    rememberMe: false
+    rememberMe: true
   });
   
   const [errors, setErrors] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [loginError, setLoginError] = useState('');
-  const navigate = useNavigate();
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -50,38 +50,22 @@ function Login() {
       setLoginError('');
       
       try {
-        const response = await fetch('/api/auth/login', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            email: formData.email,
-            password: formData.password
-          }),
-        });
+        console.log('Attempting login...');
+        const result = await loginUser(
+          formData.email, 
+          formData.password, 
+          formData.rememberMe
+        );
         
-        const data = await response.json();
-        
-        if (response.ok) {
-          // Save token to localStorage or sessionStorage based on "Remember Me"
-          if (formData.rememberMe) {
-            localStorage.setItem('token', data.token);
-          } else {
-            sessionStorage.setItem('token', data.token);
-          }
-          
-          // Save user data
-          localStorage.setItem('user', JSON.stringify(data.user));
-          
-          // Redirect to home page
-          navigate('/');
+        if (result.success) {
+          console.log('Login successful, redirecting to home');
+          navigate('home');
         } else {
-          setLoginError(data.message || 'Invalid email or password');
+          setLoginError(result.message || 'Invalid email or password');
         }
       } catch (error) {
-        setLoginError('An error occurred. Please try again later.');
-        console.error('Login error:', error);
+        console.error('Login submission error:', error);
+        setLoginError('An unexpected error occurred. Please try again later.');
       }
       
       setIsSubmitting(false);
@@ -144,7 +128,7 @@ function Login() {
         </form>
         
         <div className="auth-footer">
-          Don't have an account? <a href="/register" onClick={(e) => { e.preventDefault(); navigate('/register'); }}>Register</a>
+          Don't have an account? <a href="#" onClick={(e) => { e.preventDefault(); navigate('register'); }}>Register</a>
         </div>
       </div>
     </div>

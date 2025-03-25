@@ -1,3 +1,4 @@
+// client/src/context/AuthContext.js
 import React, { createContext, useState, useContext, useEffect } from 'react';
 import { login, register, validateToken, getUserProfile } from '../api';
 
@@ -18,10 +19,24 @@ export function AuthProvider({ children }) {
       
       if (token) {
         try {
-          const { data } = await validateToken();
-          setCurrentUser(data);
+          const result = await validateToken();
+          if (result.success) {
+            console.log('Token verified, user data:', result.data);
+            setCurrentUser(result.data);
+            
+            // Also fetch detailed profile
+            const profileResult = await getUserProfile();
+            if (profileResult.success) {
+              console.log('User profile fetched:', profileResult.data);
+              setCurrentUser(prev => ({...prev, ...profileResult.data}));
+            }
+          } else {
+            // Token is invalid, log out user
+            console.log('Token validation failed, logging out');
+            logout();
+          }
         } catch (error) {
-          // Token is invalid, log out user
+          console.error('Token verification error:', error);
           logout();
         }
       }
@@ -42,39 +57,65 @@ export function AuthProvider({ children }) {
 
   const loginUser = async (email, password, rememberMe) => {
     try {
-      const { data } = await login(email, password);
+      console.log('Attempting login for:', email);
+      const result = await login(email, password);
       
-      setCurrentUser(data);
-      
-      // Save token to appropriate storage
-      if (rememberMe) {
-        localStorage.setItem('token', data.token);
+      if (result.success) {
+        console.log('Login successful:', result.data);
+        setCurrentUser(result.data);
+        
+        // Save token to appropriate storage
+        if (rememberMe) {
+          localStorage.setItem('token', result.data.token);
+        } else {
+          sessionStorage.setItem('token', result.data.token);
+        }
+        
+        return { success: true };
       } else {
-        sessionStorage.setItem('token', data.token);
+        console.log('Login failed:', result.message);
+        return { success: false, message: result.message };
       }
-      
-      return { success: true };
     } catch (error) {
+      console.error('Login error:', error);
       return { 
         success: false, 
-        message: error.response?.data?.message || 'Login failed' 
+        message: 'An unexpected error occurred'
       };
     }
   };
 
   const registerUser = async (username, email, password) => {
     try {
-      const { data } = await register(username, email, password);
-      return { success: true, data };
+      console.log('Attempting registration for:', email);
+      const result = await register(username, email, password);
+      
+      if (result.success) {
+        console.log('Registration successful:', result.data);
+        
+        // Optionally automatically log in the user
+        // Uncomment if you want to auto-login after registration
+        /*
+        setCurrentUser(result.data);
+        localStorage.setItem('token', result.data.token);
+        */
+        
+        return { success: true, data: result.data };
+      } else {
+        console.log('Registration failed:', result.message);
+        return { success: false, message: result.message };
+      }
     } catch (error) {
+      console.error('Registration error:', error);
       return { 
         success: false, 
-        message: error.response?.data?.message || 'Registration failed' 
+        message: 'An unexpected error occurred'
       };
     }
   };
 
   const logout = () => {
+    console.log('Logging out user');
     setCurrentUser(null);
     
     // Clear token and user data
